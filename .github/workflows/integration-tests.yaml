@@ -25,10 +25,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - 
         name: Set Version Tag
-        run: echo "::set-output name=GIT_SHA::$(git rev-parse --short HEAD)"
+        run: echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       -
         name: Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ado-agent-orchestrator:${{ steps.vars.outputs.GIT_SHA }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ado-agent-orchestrator:${{ env.GIT_SHA }}

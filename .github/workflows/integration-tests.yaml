@@ -37,7 +37,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ${{ env.IMAGE_NAME }
+          tags: ${{ env.IMAGE_NAME }}
       - 
         name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.3.0

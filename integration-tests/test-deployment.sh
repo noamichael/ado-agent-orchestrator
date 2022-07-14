@@ -6,20 +6,20 @@
 # on ADO and ensure it correct provisions the agent
 
 # The ado-agent-orchestrator to test
-IMAGE_TO_TEST=$0
+IMAGE_TO_TEST=$1
 # The Azue DevOps Org URL
-ORG_URL=$1
+ORG_URL=$2
 # The Azure DevOps Personal Access Token
-ORG_PAT=$2
+ORG_PAT=$3
 # The agent image to run - TODO: Convert into a parameter
 JOB_IMAGE=ghcr.io/akanieski/ado-pipelines-linux:0.0.1-preview
 # The agent pool(s) to pool - TODO: Convert into a parameter
 AGENT_POOLS=test-agent-pool
 
 # Load the newly built image into kind
-kind load docker-image $IMAGE_TO_TEST
+#kind load docker-image $IMAGE_TO_TEST
 # Load the agent we will test
-kind load docker-image $JOB_IMAGE
+#kind load docker-image $JOB_IMAGE
 
 # Deploy the agent-orchestrator onto kubernetes
 kubectl apply -f - << EOF
@@ -55,5 +55,7 @@ spec:
         - name: JOB_NAMESPACE
           value: "default"
 EOF
+
+kubectl describe deployment/ado-orchestrator-deployment
 
 # TODO: Trigger an ADO pipeline somehow

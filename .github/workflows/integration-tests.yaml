@@ -23,9 +23,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - 
+        name: Set Version Tag
+        run: echo "::set-output name=GIT_SHA::$(git rev-parse --short HEAD)"
       -
         name: Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ado-agent-orchestrator:${{ github.head_ref || github.ref_name }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ado-agent-orchestrator:${{ steps.vars.outputs.GIT_SHA }}

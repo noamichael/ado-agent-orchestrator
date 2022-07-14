@@ -20,17 +20,28 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       -
+        uses: azure/setup-kubectl@v2.0
+      -
         name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - 
-        name: Set Version Tag
-        run: echo "GIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        name: Build Image Name
+        run: | 
+          GIT_SHA=$(git rev-parse --short HEAD)
+          echo "IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/ado-agent-orchestrator:${GIT_SHA}" >> $GITHUB_ENV
       -
         name: Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ado-agent-orchestrator:${{ env.GIT_SHA }}
+          tags: ${{ env.IMAGE_NAME }
+      - 
+        name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.3.0
+      -
+        name: Run Integration Test
+        run: |
+          ./integration-tests/test-deployment.sh ${{ env.IMAGE_NAME }} ${{ secrets.ORG_URL }} ${{ secrets.ORG_PAT }}

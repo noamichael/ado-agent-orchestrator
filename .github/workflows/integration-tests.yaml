@@ -1,6 +1,10 @@
 name: integration-tests
 
-on: pull_request
+# on: pull_request
+on:
+  push:
+    branches:
+      - "feature/integration-tests"
 
 jobs:
   docker:

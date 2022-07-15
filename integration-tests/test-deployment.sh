@@ -98,11 +98,13 @@ az pipelines run --name ${PIPELINE_NAME}  --organization ${ORG_URL} --project ${
 # try up to 10 times for the job to be created
 for i in {1..10}
 do
+  log "Checking if job exists..."
    JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
    # Break if we find the job
    if [ "${JOB_COUNT}" -eq 1 ]; then
     break
    fi
+   log "Job Count: ${JOB_COUNT}"
    sleep 5s
 done
 
@@ -111,6 +113,7 @@ JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
 
 if [ "${JOB_COUNT}" -ne 1 ]; then
     log "Assertion failed: expected 1 jobs, got ${JOB_COUNT}" "ERROR"
+    kubectl logs deployment/ado-orchestrator-deployment -n ${NAMESPACE} 
     exit 1
 fi
 

@@ -5,21 +5,36 @@
 # onto a k8s cluster. Afterwards, it will spin up a job
 # on ADO and ensure it correct provisions the agent
 
+# Exit 1 on ANY error
+set -o pipefail
+
 # The ado-agent-orchestrator to test
 IMAGE_TO_TEST=$1
 # The Azue DevOps Org URL
 ORG_URL=$2
 # The Azure DevOps Personal Access Token
 ORG_PAT=$3
+# The project to trigger the build in
+PROJECT=$4
+# The name of the pipeline to trigger
+PIPELINE_NAME=$5
 # The agent image to run - TODO: Convert into a parameter
 JOB_IMAGE=ghcr.io/akanieski/ado-pipelines-linux:0.0.1-preview
 # The agent pool(s) to pool - TODO: Convert into a parameter
 AGENT_POOLS=test-agent-pool
+# The timeout for the test
+TEST_TIMEOUT=30s
+# The namespace of the jobs
+NAMESPACE=default
 
-# Load the newly built image into kind
-#kind load docker-image $IMAGE_TO_TEST
-# Load the agent we will test
-#kind load docker-image $JOB_IMAGE
+function log() {
+    TIMESTAMP=$(date +"%Y-%m-%dT%H:%M:%S%:Z")
+    LEVEL=${2:-INFO}
+    echo "[${LEVEL}][${TIMESTAMP}] ${1}"
+}
+
+log "-- Starting integration test ---" 
+log "Deploying orchestrator - will wait ${TEST_TIMEOUT} for it to be ready..."
 
 # Deploy the agent-orchestrator onto kubernetes
 kubectl apply -f - << EOF
@@ -54,8 +69,44 @@ spec:
           value: "${JOB_IMAGE}"
         - name: JOB_NAMESPACE
           value: "default"
+        - name: MINIMUM_AGENT_COUNT
+          value: "1"
 EOF
 
-kubectl describe deployment/ado-orchestrator-deployment
+# Wait for the deployment to become ready
+kubectl wait deployment/ado-orchestrator-deployment -n ${NAMESPACE} --for condition=Available --timeout=${TEST_TIMEOUT}
 
-# TODO: Trigger an ADO pipeline somehow
+log "Orchestrator successfully deployed"
+
+log "Logging into Azure"
+
+echo  ${ORG_PAT} | az devops login --organization ${ORG_URL}
+
+log "Asserting there are no jobs"
+
+JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
+
+if [ "${JOB_COUNT}" -gt 0 ]; then
+    log "Assertion failed: expected 0 jobs, got ${JOB_COUNT}" "ERROR"
+    exit 1
+fi
+
+log "Triggering Pipeline"
+
+az pipelines run --name ${PIPELINE_NAME}  --organization ${ORG_URL} --project ${PROJECT}
+
+JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
+
+if [ "${JOB_COUNT}" -ne 1 ]; then
+    log "Assertion failed: expected 1 jobs, got ${JOB_COUNT}" "ERROR"
+    exit 1
+fi
+
+log "Waiting ${TEST_TIMEOUT} for Job to finish"
+
+JOB_NAME=$(kubectl get job -n ${NAMESPACE} -o=jsonpath="{.items[0].metadata.labels.job-name}")
+
+# Wait for job to finish
+kubectl wait job/${JOB_NAME} -n ${NAMESPACE} --for condition=Complete --timeout=${TEST_TIMEOUT}
+
+log "-- Result: SUCCESS ---" 

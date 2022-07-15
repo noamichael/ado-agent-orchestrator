@@ -34,10 +34,30 @@ function log() {
 }
 
 log "-- Starting integration test ---" 
+
+log "Granting default service account edit permissions"
+
+# Grant the default service account the ability to
+# do most things in the test namespace
+kubectl apply -n ${NAMESPACE} -f - << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: default-edit
+subjects:
+- kind: ServiceAccount
+  name: default # "name" is case sensitive
+  namespace: ${NAMESPACE}
+roleRef:
+  kind: ClusterRole #this must be Role or ClusterRole
+  name: edit
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
 log "Wating ${TEST_TIMEOUT} for orchestrator with image ${IMAGE_TO_TEST}"
 
 # Deploy the agent-orchestrator onto kubernetes
-kubectl apply -f - << EOF
+kubectl apply -n ${NAMESPACE} -f - << EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:

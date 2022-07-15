@@ -28,7 +28,7 @@ TEST_TIMEOUT=30s
 NAMESPACE=default
 
 function log() {
-    TIMESTAMP=$(date +"%Y-%m-%dT%H:%M:%S%:Z")
+    TIMESTAMP=$(date +"%Y-%m-%dT%H:%M:%S")
     LEVEL=${2:-INFO}
     echo "[${LEVEL}][${TIMESTAMP}] ${1}"
 }
@@ -95,13 +95,23 @@ log "Triggering Pipeline ${PIPELINE_NAME}"
 
 az pipelines run --name ${PIPELINE_NAME}  --organization ${ORG_URL} --project ${PROJECT}
 
+# try up to 10 times for the job to be created
+for i in {1..10}
+do
+   JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
+   if [ "${JOB_COUNT}" -ne 1 ]; then
+    break
+   fi
+   sleep 5s
+done
+
+# Check one more time in case above loop ran 10 times without starting job
 JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
 
 if [ "${JOB_COUNT}" -ne 1 ]; then
     log "Assertion failed: expected 1 jobs, got ${JOB_COUNT}" "ERROR"
     exit 1
 fi
-
 
 JOB_NAME=$(kubectl get job -n ${NAMESPACE} -o=jsonpath="{.items[0].metadata.labels.job-name}")
 

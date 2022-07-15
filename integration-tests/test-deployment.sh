@@ -108,7 +108,7 @@ done
 # Check one more time in case above loop ran 10 times without starting job
 JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
 
-if [ "${JOB_COUNT}" -ne 1 ]; then
+if [ "${JOB_COUNT}" -ne 0 ]; then
     log "Assertion failed: expected 1 jobs, got ${JOB_COUNT}" "ERROR"
     exit 1
 fi

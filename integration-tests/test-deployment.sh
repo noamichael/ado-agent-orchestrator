@@ -99,7 +99,8 @@ az pipelines run --name ${PIPELINE_NAME}  --organization ${ORG_URL} --project ${
 for i in {1..10}
 do
    JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
-   if [ "${JOB_COUNT}" -ne 1 ]; then
+   # Break if we find the job
+   if [ "${JOB_COUNT}" -eq 1 ]; then
     break
    fi
    sleep 5s
@@ -108,7 +109,7 @@ done
 # Check one more time in case above loop ran 10 times without starting job
 JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
 
-if [ "${JOB_COUNT}" -ne 0 ]; then
+if [ "${JOB_COUNT}" -ne 1 ]; then
     log "Assertion failed: expected 1 jobs, got ${JOB_COUNT}" "ERROR"
     exit 1
 fi

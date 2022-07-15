@@ -34,7 +34,7 @@ function log() {
 }
 
 log "-- Starting integration test ---" 
-log "Deploying orchestrator - will wait ${TEST_TIMEOUT} for it to be ready..."
+log "Wating ${TEST_TIMEOUT} for orchestrator with image ${IMAGE_TO_TEST}"
 
 # Deploy the agent-orchestrator onto kubernetes
 kubectl apply -f - << EOF
@@ -113,7 +113,8 @@ JOB_COUNT=$(kubectl get job -n ${NAMESPACE} --no-headers | wc -l)
 
 if [ "${JOB_COUNT}" -ne 1 ]; then
     log "Assertion failed: expected 1 jobs, got ${JOB_COUNT}" "ERROR"
-    kubectl logs deployment/ado-orchestrator-deployment -n ${NAMESPACE} 
+    kubectl describe deployment/ado-orchestrator-deployment -n ${NAMESPACE}
+    kubectl logs deployment/ado-orchestrator-deployment -n ${NAMESPACE}
     exit 1
 fi
 

@@ -91,7 +91,7 @@ if [ "${JOB_COUNT}" -gt 0 ]; then
     exit 1
 fi
 
-log "Triggering Pipeline"
+log "Triggering Pipeline ${PIPELINE_NAME}"
 
 az pipelines run --name ${PIPELINE_NAME}  --organization ${ORG_URL} --project ${PROJECT}
 
@@ -102,9 +102,10 @@ if [ "${JOB_COUNT}" -ne 1 ]; then
     exit 1
 fi
 
-log "Waiting ${TEST_TIMEOUT} for Job to finish"
 
 JOB_NAME=$(kubectl get job -n ${NAMESPACE} -o=jsonpath="{.items[0].metadata.labels.job-name}")
+
+log "Waiting ${TEST_TIMEOUT} for Job/${JOB_NAME} to finish"
 
 # Wait for job to finish
 kubectl wait job/${JOB_NAME} -n ${NAMESPACE} --for condition=Complete --timeout=${TEST_TIMEOUT}

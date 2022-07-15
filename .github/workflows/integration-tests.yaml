@@ -46,7 +46,7 @@ jobs:
         env:
           # In the future, investigate a better place to set this
           ADO_PROJECT: hol
-          ≈: pipeline-test
+          PIPELINE_NAME: pipeline-test
         run: |
           ./integration-tests/test-deployment.sh ${{ env.IMAGE_NAME }} \
             ${{ secrets.ORG_URL }} \

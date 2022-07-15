@@ -57,7 +57,6 @@ spec:
       containers:
       - name: ado-orchestrator
         image: ${IMAGE_TO_TEST}
-        imagePullPolicy: Never
         env:
         - name: ORG_URL
           value: "${ORG_URL}"

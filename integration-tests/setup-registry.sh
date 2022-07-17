@@ -66,4 +66,4 @@ spec:
 EOF
 
 # Wait for the registry to be ready
-kubectl wait deployment/registry -n ${NAMESPACE} --for condition=Available --timeout=60s
+kubectl wait deployment/registry-deployment -n ${NAMESPACE} --for condition=Available --timeout=60s

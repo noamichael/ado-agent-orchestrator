@@ -68,4 +68,19 @@ EOF
 # Wait for the registry to be ready
 kubectl wait deployment/registry-deployment -n ${NAMESPACE} --for condition=Available --timeout=60s
 
-curl -vvv localhost/v2/
+# Wait for the registry to be fully up
+for i in {1..10}
+do
+  echo "Checking registry status..."
+  STATUS=$(curl -s -o /dev/null -w "%{http_code}" localhost/v2/)
+
+  if [ "${STATUS}" -le 399 ]; then
+    echo "Registry ready with ${STATUS}!"
+    break
+  fi
+
+  echo "Registry returned ${STATUS}. Trying again in 5 seconds"
+
+  sleep 5s
+
+done

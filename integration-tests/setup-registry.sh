@@ -67,3 +67,5 @@ EOF
 
 # Wait for the registry to be ready
 kubectl wait deployment/registry-deployment -n ${NAMESPACE} --for condition=Available --timeout=60s
+
+curl -vvv localhost/v2/

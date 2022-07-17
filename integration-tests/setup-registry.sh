@@ -2,11 +2,14 @@
 
 NAMESPACE=default
 
+# Create the ingress namespace
+kubectl create namespace ingress-nginx
+
 # Deploy Ngnix
-kubectl apply -n ${NAMESPACE} -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+kubectl apply -n ingress-nginx -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 
 # Wait for it to be ready
-kubectl wait \
+kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
   --timeout=90s
@@ -16,7 +19,7 @@ kubectl apply -n ${NAMESPACE} -f - << EOF
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: example-ingress
+  name: registry-ingress
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
 spec:

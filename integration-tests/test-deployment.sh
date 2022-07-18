@@ -144,4 +144,8 @@ log "Waiting ${TEST_TIMEOUT} for Job/${JOB_NAME} to finish"
 # Wait for job to finish
 kubectl wait job/${JOB_NAME} -n ${NAMESPACE} --for condition=Complete --timeout=${TEST_TIMEOUT}
 
+kubectl describe job/${JOB_NAME} -n ${NAMESPACE}
+
+kubectl logs job/${JOB_NAME}  -n ${NAMESPACE}
+
 log "-- Result: SUCCESS ---" 

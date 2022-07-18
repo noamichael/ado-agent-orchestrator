@@ -23,7 +23,7 @@ JOB_IMAGE=ghcr.io/akanieski/ado-pipelines-linux:0.0.1-preview
 # The agent pool(s) to pool - TODO: Convert into a parameter
 AGENT_POOLS=test-agent-pool
 # The timeout for the test
-TEST_TIMEOUT=30s
+TEST_TIMEOUT=300s
 # The namespace of the jobs
 NAMESPACE=default
 

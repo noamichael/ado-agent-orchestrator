@@ -45,10 +45,12 @@ jobs:
         env:
           # In the future, investigate a better place to set this
           ADO_PROJECT: hol
-          PIPELINE_NAME: pipeline-test
+          PIPELINE_NAME: integration-pipeline
+          PIPELINE_REPO: pipeline-test
         run: |
           ./integration-tests/test-deployment.sh ${{ env.IMAGE_NAME }} \
             ${{ secrets.ORG_URL }} \
             ${{ secrets.ORG_PAT }} \
             ${{ env.ADO_PROJECT }} \
-            ${{ env.PIPELINE_NAME }}
+            ${{ env.PIPELINE_NAME }} \
+            ${{ env.PIPELINE_REPO }}

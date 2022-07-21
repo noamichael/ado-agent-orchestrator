@@ -18,6 +18,8 @@ ORG_PAT=$3
 PROJECT=$4
 # The name of the pipeline to trigger
 PIPELINE_NAME=$5
+# The name of the pipeline to trigger
+PIPELINE_REPO=$6
 # The agent image to run - TODO: Convert into a parameter
 JOB_IMAGE=ghcr.io/akanieski/ado-pipelines-linux:0.0.1-preview
 # The agent pool(s) to pool - TODO: Convert into a parameter
@@ -31,6 +33,11 @@ function log() {
     TIMESTAMP=$(date +"%Y-%m-%dT%H:%M:%S")
     LEVEL=${2:-INFO}
     echo "[${LEVEL}][${TIMESTAMP}] ${1}"
+}
+
+function cleanupPipeline() {
+  log "Deleting Pipeline ${1}"
+  az pipelines delete --id "${1}" --org "${ORG_URL}" -p "${PROJECT}"
 }
 
 log "-- Starting integration test ---" 
@@ -110,9 +117,18 @@ if [ "${JOB_COUNT}" -gt 0 ]; then
     exit 1
 fi
 
-log "Triggering Pipeline ${PIPELINE_NAME}"
+RANDOM_PIPELINE_NAME="${PIPELINE_NAME}-${RANDOM}"
 
-az pipelines run --name ${PIPELINE_NAME}  --organization ${ORG_URL} --project ${PROJECT}
+log "Creating Pipeline Test pipeline [${RANDOM_PIPELINE_NAME}]"
+
+az pipelines create --name "${RANDOM_PIPELINE_NAME}" \
+  --description 'Pipeline for integration tests' \
+  --repository "${ORG_URL}/${PROJECT}/_git/${PIPELINE_REPO}" \
+  --project "${PROJECT}" \
+  --branch main \
+  --yml-path azure-pipelines.yml
+
+PIPELINE_ID=$(az pipelines list --org "${ORG_URL}" -p "${PROJECT}" --name "${RANDOM_PIPELINE_NAME}" -o table | awk '{print $1}' | tail -1)
 
 # try up to 10 times for the job to be created
 for i in {1..10}
@@ -134,6 +150,7 @@ if [ "${JOB_COUNT}" -ne 1 ]; then
     log "Assertion failed: expected 1 jobs, got ${JOB_COUNT}" "ERROR"
     kubectl describe deployment/ado-orchestrator-deployment -n ${NAMESPACE}
     kubectl logs deployment/ado-orchestrator-deployment -n ${NAMESPACE}
+    cleanupPipeline "${PIPELINE_ID}"
     exit 1
 fi
 
@@ -147,5 +164,7 @@ kubectl wait job/${JOB_NAME} -n ${NAMESPACE} --for condition=Complete --timeout=
 kubectl describe job/${JOB_NAME} -n ${NAMESPACE}
 
 kubectl logs job/${JOB_NAME}  -n ${NAMESPACE}
+
+cleanupPipeline "${PIPELINE_ID}"
 
 log "-- Result: SUCCESS ---" 

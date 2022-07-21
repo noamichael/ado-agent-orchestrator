@@ -37,7 +37,7 @@ function log() {
 
 function cleanupPipeline() {
   log "Deleting Pipeline ${1}"
-  az pipelines delete --id "${1}" --org "${ORG_URL}" -p "${PROJECT}"
+  az pipelines delete --id "${1}" --org "${ORG_URL}" -p "${PROJECT}" --yes
 }
 
 log "-- Starting integration test ---" 
@@ -128,6 +128,7 @@ az pipelines create --name "${RANDOM_PIPELINE_NAME}" \
   --branch main \
   --yml-path azure-pipelines.yml
 
+# Fetch the ID of the pipeline so we can remove it later
 PIPELINE_ID=$(az pipelines list --org "${ORG_URL}" -p "${PROJECT}" --name "${RANDOM_PIPELINE_NAME}" -o table | awk '{print $1}' | tail -1)
 
 # try up to 10 times for the job to be created
